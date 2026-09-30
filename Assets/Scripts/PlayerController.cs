@@ -51,6 +51,7 @@ public class PlayerController : MonoBehaviour
     private float doubleTapMaxDelay = 0.32f;
 
     // Visual notification
+    private readonly Collider[] overlapHitBuffer = new Collider[16];
     private string bannerMessage = "";
     private float bannerTimer = 0f;
 
@@ -385,11 +386,14 @@ public class PlayerController : MonoBehaviour
 
         Vector3 p1 = transform.position + controller.center + Vector3.up * (-controller.height * 0.5f + controller.radius);
         Vector3 p2 = transform.position + controller.center + Vector3.up * (controller.height * 0.5f - controller.radius);
-        Collider[] hits = Physics.OverlapCapsule(p1, p2, controller.radius * 0.95f);
+        
+        // Zero-allocation NonAlloc capsule overlap check (Prevents 60 GC allocations/sec)
+        int hitCount = Physics.OverlapCapsuleNonAlloc(p1, p2, controller.radius * 0.95f, overlapHitBuffer);
 
-        for (int i = 0; i < hits.Length; i++)
+        for (int i = 0; i < hitCount; i++)
         {
-            Collider col = hits[i];
+            Collider col = overlapHitBuffer[i];
+            overlapHitBuffer[i] = null; // Clear reference immediately for memory hygiene
             if (col == null || col.gameObject == gameObject || col.transform.IsChildOf(transform)) continue;
 
             string cName = col.gameObject.name;
