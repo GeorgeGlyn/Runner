@@ -84,6 +84,14 @@ public class CameraFollow : MonoBehaviour
         float activePitch = isPortrait ? portraitPitch : landscapePitch;
         float activeFov = isPortrait ? portraitFov : landscapeFov;
 
+        // Cinematic intro framing when at Start Screen
+        if (GameManager.Instance != null && !GameManager.Instance.IsPlaying && !GameManager.Instance.isGameOver)
+        {
+            activeOffset = isPortrait ? new Vector3(0f, 2.7f, -3.8f) : new Vector3(0f, 2.2f, -3.4f);
+            activePitch = isPortrait ? 10.0f : 8.5f;
+            activeFov = isPortrait ? 60f : 55f;
+        }
+
         // 2. Adjust FOV smoothly
         if (cam != null)
         {

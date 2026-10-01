@@ -44,6 +44,9 @@ public class AudioManager : MonoBehaviour
     public AudioClip shieldSaveClip;
     public AudioClip crashClip;
     public AudioClip powerupClip;
+    public AudioClip whistleClip;
+    public AudioClip highscoreClip;
+    public AudioClip clickClip;
 
     [Header("Volume Controls")]
     [Range(0f, 1f)] public float bgmVolume = 0.55f;
@@ -104,6 +107,9 @@ public class AudioManager : MonoBehaviour
         if (shieldSaveClip == null) shieldSaveClip = LoadClip("shield_save");
         if (crashClip == null) crashClip = LoadClip("crash");
         if (powerupClip == null) powerupClip = LoadClip("powerup");
+        if (whistleClip == null) whistleClip = LoadClip("whistle");
+        if (highscoreClip == null) highscoreClip = LoadClip("highscore");
+        if (clickClip == null) clickClip = LoadClip("click");
     }
 
     private AudioClip LoadClip(string clipName)
@@ -236,6 +242,24 @@ public class AudioManager : MonoBehaviour
     {
         if (powerupClip == null) EnsureClipsLoaded();
         PlaySFX(powerupClip, 0.90f);
+    }
+
+    public void PlayWhistle()
+    {
+        if (whistleClip == null) EnsureClipsLoaded();
+        PlaySFX(whistleClip, 0.95f);
+    }
+
+    public void PlayHighScoreCelebration()
+    {
+        if (highscoreClip == null) EnsureClipsLoaded();
+        PlaySFX(highscoreClip, 1.0f);
+    }
+
+    public void PlayClick()
+    {
+        if (clickClip == null) EnsureClipsLoaded();
+        PlaySFX(clickClip, 0.75f);
     }
 
     private void PlaySFX(AudioClip clip, float volumeScale = 1.0f)

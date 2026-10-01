@@ -6,7 +6,7 @@ public class MovingTrain : MonoBehaviour
 
     void Update()
     {
-        if (GameManager.Instance != null && GameManager.Instance.isGameOver) return;
+        if (GameManager.Instance != null && (!GameManager.Instance.IsPlaying || GameManager.Instance.isGameOver)) return;
         transform.Translate(Vector3.back * speed * Time.deltaTime);
     }
 

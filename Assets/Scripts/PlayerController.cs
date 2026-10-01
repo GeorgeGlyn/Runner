@@ -91,9 +91,20 @@ public class PlayerController : MonoBehaviour
         {
             hoverboard.gameObject.SetActive(false);
         }
-        if (animator != null)
+        if (GameManager.Instance != null && !GameManager.Instance.IsPlaying)
         {
-            animator.SetBool("IsHovering", false);
+            if (animator != null)
+            {
+                animator.SetBool("IsHovering", true);
+                animator.speed = 1f;
+            }
+        }
+        else
+        {
+            if (animator != null)
+            {
+                animator.SetBool("IsHovering", false);
+            }
         }
         currentBaseSpeed = initialSpeed;
         forwardSpeed = initialSpeed;
@@ -101,6 +112,38 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
+        // 0. Intro / Start Screen: Character stands idle waiting for user tap or key
+        if (GameManager.Instance != null && !GameManager.Instance.IsPlaying && !GameManager.Instance.isGameOver)
+        {
+            if (animator != null)
+            {
+                animator.SetBool("IsHovering", true);
+                animator.speed = 1f;
+            }
+            if (hoverboard != null)
+            {
+                hoverboard.gameObject.SetActive(false);
+            }
+            if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.W))
+            {
+                GameManager.Instance.StartGame();
+            }
+            return;
+        }
+
+        // Pause state
+        if (GameManager.Instance != null && GameManager.Instance.isPaused)
+        {
+            return;
+        }
+
+        // Toggle pause shortcut
+        if (Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.P))
+        {
+            GameManager.Instance?.TogglePause();
+            return;
+        }
+
         if (GameManager.Instance != null && GameManager.Instance.isGameOver)
         {
             if (animator != null) animator.speed = 0f;
@@ -732,7 +775,7 @@ public class PlayerController : MonoBehaviour
 
     void OnGUI()
     {
-        if (GameManager.Instance != null && GameManager.Instance.isGameOver) return;
+        if (GameManager.Instance != null && (!GameManager.Instance.IsPlaying || GameManager.Instance.isGameOver || GameManager.Instance.isPaused)) return;
 
         int baseFontSize = Mathf.Clamp(Mathf.RoundToInt(Screen.height * 0.026f), 15, 22);
 
