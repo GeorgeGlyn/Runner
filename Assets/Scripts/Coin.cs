@@ -39,7 +39,11 @@ public class Coin : MonoBehaviour
             Collider col = GetComponent<Collider>();
             if (col != null) col.enabled = false;
 
-            if (coinSound != null)
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.PlayCoinSound();
+            }
+            else if (coinSound != null)
             {
                 AudioSource.PlayClipAtPoint(coinSound, transform.position);
             }

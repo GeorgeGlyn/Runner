@@ -336,12 +336,14 @@ public class PlayerController : MonoBehaviour
             if (isSliding) StopSlide();
             verticalVelocity = jumpForce;
             lastGroundedTime = -10f; // Consume jump immediately
+            AudioManager.Instance?.PlayJump();
         }
     }
 
     public void PerformSlide()
     {
         StartSlide();
+        AudioManager.Instance?.PlaySlide();
         if (controller != null && !controller.isGrounded)
         {
             // Fast dive straight back to ground!
@@ -355,6 +357,7 @@ public class PlayerController : MonoBehaviour
         {
             hoverboardCount--;
             ActivateHoverboard(15f);
+            AudioManager.Instance?.PlayHoverboardDeploy();
             ShowBanner(string.Format("🛹 HOVERBOARD ACTIVATED! ({0} Remaining)", hoverboardCount));
         }
         else if (isHoverboardActive)
@@ -451,6 +454,7 @@ public class PlayerController : MonoBehaviour
 
         // Without hoverboard: Game Over!
         forwardSpeed = 0f;
+        AudioManager.Instance?.PlayCrash();
         if (GameManager.Instance != null)
         {
             GameManager.Instance.GameOver();
@@ -464,6 +468,7 @@ public class PlayerController : MonoBehaviour
         DeactivateHoverboard();
         isInvulnerable = true;
         invulnerableTimer = 1.6f;
+        AudioManager.Instance?.PlayShieldSave();
         ShowBanner("💥 HOVERBOARD SHIELD SAVED YOU!");
 
         // 1. Camera impact shake
@@ -579,6 +584,7 @@ public class PlayerController : MonoBehaviour
     public void CollectHoverboardItem()
     {
         hoverboardCount++;
+        AudioManager.Instance?.PlayPowerup();
         ShowBanner(string.Format("🛹 +1 HOVERBOARD STORED! (Total: {0})", hoverboardCount));
     }
 

@@ -277,6 +277,18 @@ public class RunnerSceneBuilder
         GameObject gmGO = new GameObject("GameManager");
         gmGO.AddComponent<GameManager>();
 
+        // Setup AudioManager with Synthesized SFX & BGM Clips
+        GameObject audioGO = new GameObject("AudioManager");
+        AudioManager am = audioGO.AddComponent<AudioManager>();
+        am.bgmClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/bgm.wav");
+        am.coinClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/coin.wav");
+        am.jumpClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/jump.wav");
+        am.slideClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/slide.wav");
+        am.hoverboardClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/hoverboard.wav");
+        am.shieldSaveClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/shield_save.wav");
+        am.crashClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/crash.wav");
+        am.powerupClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/powerup.wav");
+
         // Save Scene
         string scenePath = "Assets/Scenes/MainRunnerScene.unity";
         EditorSceneManager.SaveScene(newScene, scenePath);

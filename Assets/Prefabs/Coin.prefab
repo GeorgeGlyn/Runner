@@ -127,5 +127,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1ea938ef9a05b4443abb0c4baaef38c6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Coin
-  rotationSpeed: 120
+  rotationSpeed: 140
   coinSound: {fileID: 8300000, guid: e2c9b0543f2bca440ae79353af0cbea8, type: 3}

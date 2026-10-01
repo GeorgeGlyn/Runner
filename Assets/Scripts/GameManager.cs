@@ -73,7 +73,14 @@ public class GameManager : MonoBehaviour
             alignment = TextAnchor.MiddleRight
         };
         coinStyle.normal.textColor = Color.yellow;
-        GUI.Label(new Rect(Screen.width - 240, 20, 215, 40), "🪙 " + coins, coinStyle);
+GUI.Label(new Rect(Screen.width - 260, 20, 180, 40), "COINS: " + coins, coinStyle);
+
+        // Mute / Unmute Button
+        string muteText = (AudioManager.Instance != null && AudioManager.Instance.isMuted) ? "MUTE" : "AUDIO";
+        if (GUI.Button(new Rect(Screen.width - 70, 20, 52, 34), muteText))
+        {
+            AudioManager.Instance?.ToggleMute();
+        }
 
         // Game Over Screen (Centered Responsive Modal)
         if (isGameOver)
