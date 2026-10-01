@@ -247,66 +247,64 @@ public class ShopManager : MonoBehaviour
     {
         if (!isShopOpen) return;
 
-        // Modal Dimensions
-        float modalW = Mathf.Clamp(Screen.width * 0.88f, 330f, 480f);
-        float modalH = Mathf.Clamp(Screen.height * 0.78f, 440f, 560f);
-        float modalX = (Screen.width - modalW) / 2f;
-        float modalY = (Screen.height - modalH) / 2f;
+        float sw = Screen.width;
+        float sh = Screen.height;
+        float scale = Mathf.Clamp(sw / 400f, 0.80f, 1.35f);
 
-        // Background Box with Dark Subway Aesthetic
-        GUI.Box(new Rect(modalX, modalY, modalW, modalH), "");
+        // Dark navy vignette backdrop
+        SubwayUI.DrawRect(new Rect(0, 0, sw, sh), new Color(0.04f, 0.06f, 0.10f, 0.90f));
+
+        // Modal Dimensions
+        float modalW = Mathf.Clamp(sw * 0.90f, 320f, 460f);
+        float modalH = Mathf.Clamp(sh * 0.82f, 450f, 580f);
+        float modalX = (sw - modalW) / 2f;
+        float modalY = (sh - modalH) / 2f;
+
+        // Card Container
+        SubwayUI.DrawCard(new Rect(modalX, modalY, modalW, modalH), SubwayUI.DarkCard, SubwayUI.GoldBorder, 3f);
 
         // 1. Header & Total Currency
-        GUIStyle titleStyle = new GUIStyle(GUI.skin.label)
-        {
-            fontSize = Mathf.Clamp(Mathf.RoundToInt(Screen.height * 0.032f), 20, 28),
-            fontStyle = FontStyle.Bold,
-            alignment = TextAnchor.MiddleCenter
-        };
-        titleStyle.normal.textColor = Color.white;
-        GUI.Label(new Rect(modalX, modalY + 12f, modalW, 36f), "SURF SHOP", titleStyle);
+        SubwayUI.DrawExtrudedText(new Rect(modalX, modalY + (12f * scale), modalW, 36f * scale),
+            "SURF SHOP", Mathf.RoundToInt(28 * scale), Color.yellow, new Color(0.35f, 0.15f, 0f, 0.85f), 3);
 
-        GUIStyle coinStyle = new GUIStyle(GUI.skin.box)
-        {
-            fontSize = Mathf.Clamp(Mathf.RoundToInt(Screen.height * 0.022f), 14, 18),
-            fontStyle = FontStyle.Bold,
-            alignment = TextAnchor.MiddleCenter
-        };
-        coinStyle.normal.textColor = Color.yellow;
-        GUI.Box(new Rect(modalX + 25f, modalY + 52f, modalW - 50f, 32f), "TOTAL COINS: " + GetTotalCoins(), coinStyle);
+        Rect coinRect = new Rect(modalX + 20f, modalY + (50f * scale), modalW - 40f, 36f * scale);
+        SubwayUI.DrawPillBadge(coinRect, "🪙 TOTAL COINS", GetTotalCoins().ToString("N0"), SubwayUI.GoldBorder, Color.yellow, Mathf.RoundToInt(15 * scale));
 
         // 2. Navigation Tabs
-        float tabW = (modalW - 50f) / 2f;
-        GUIStyle tabStyle0 = new GUIStyle(GUI.skin.button)
-        {
-            fontSize = 13,
-            fontStyle = FontStyle.Bold
-        };
-        tabStyle0.normal.textColor = (activeTab == 0) ? Color.cyan : Color.gray;
-        if (GUI.Button(new Rect(modalX + 25f, modalY + 92f, tabW - 4f, 34f), "GEAR & UPGRADES", tabStyle0))
+        float tabW = (modalW - 40f) / 2f;
+        float tabH = 38f * scale;
+        float tabY = modalY + (94f * scale);
+
+        Rect tab0Rect = new Rect(modalX + 20f, tabY, tabW - 4f, tabH);
+        Color tab0Face = (activeTab == 0) ? SubwayUI.BlueFace : SubwayUI.InnerCard;
+        Color tab0Bevel = (activeTab == 0) ? SubwayUI.BlueBevel : SubwayUI.GrayBorder;
+        Color tab0Text = (activeTab == 0) ? Color.white : Color.gray;
+        if (SubwayUI.DrawChunkyButton(tab0Rect, "⚡ GEAR & UPGRADES", tab0Face, tab0Bevel, tab0Text, Mathf.RoundToInt(12 * scale)))
         {
             activeTab = 0;
+            AudioManager.Instance?.PlayClick();
         }
 
-        GUIStyle tabStyle1 = new GUIStyle(GUI.skin.button)
-        {
-            fontSize = 13,
-            fontStyle = FontStyle.Bold
-        };
-        tabStyle1.normal.textColor = (activeTab == 1) ? Color.magenta : Color.gray;
-        if (GUI.Button(new Rect(modalX + 25f + tabW + 4f, modalY + 92f, tabW - 4f, 34f), "BOARD SKINS", tabStyle1))
+        Rect tab1Rect = new Rect(modalX + 20f + tabW + 4f, tabY, tabW - 4f, tabH);
+        Color tab1Face = (activeTab == 1) ? SubwayUI.PurpleFace : SubwayUI.InnerCard;
+        Color tab1Bevel = (activeTab == 1) ? SubwayUI.PurpleBevel : SubwayUI.GrayBorder;
+        Color tab1Text = (activeTab == 1) ? Color.white : Color.gray;
+        if (SubwayUI.DrawChunkyButton(tab1Rect, "🛹 BOARD SKINS", tab1Face, tab1Bevel, tab1Text, Mathf.RoundToInt(12 * scale)))
         {
             activeTab = 1;
+            AudioManager.Instance?.PlayClick();
         }
 
-        float contentY = modalY + 136f;
-        float itemW = modalW - 50f;
+        float contentY = tabY + tabH + (12f * scale);
+        float itemW = modalW - 40f;
+        float itemH = 60f * scale;
+        float itemSpacing = 8f * scale;
 
         // 3. Tab Content
         if (activeTab == 0)
         {
             // Item A: Single Hoverboard
-            DrawShopRow(modalX + 25f, contentY, itemW, 58f,
+            DrawShopRow(modalX + 20f, contentY, itemW, itemH,
                 "Hoverboard (+1)",
                 string.Format("Stock: {0} boards", GetHoverboardStock()),
                 string.Format("BUY {0}", PRICE_SINGLE_BOARD),
@@ -322,10 +320,10 @@ public class ShopManager : MonoBehaviour
                     {
                         SetFeedback("Not enough coins!");
                     }
-                });
+                }, false, scale);
 
             // Item B: Hoverboard 3-Pack
-            DrawShopRow(modalX + 25f, contentY + 66f, itemW, 58f,
+            DrawShopRow(modalX + 20f, contentY + itemH + itemSpacing, itemW, itemH,
                 "Hoverboard 3-Pack",
                 "Value Pack (Save 100 Coins!)",
                 string.Format("BUY {0}", PRICE_BOARD_PACK),
@@ -341,7 +339,7 @@ public class ShopManager : MonoBehaviour
                     {
                         SetFeedback("Not enough coins!");
                     }
-                });
+                }, false, scale);
 
             // Item C: Duration Upgrade
             int curLevel = GetHoverboardLevel();
@@ -350,7 +348,7 @@ public class ShopManager : MonoBehaviour
                 : string.Format("Max Level: {0}s Shield", UPGRADE_DURATIONS[curLevel - 1]);
             string btnText = curLevel < 4 ? string.Format("UPGRADE {0}", UPGRADE_COSTS[curLevel]) : "MAXED";
 
-            DrawShopRow(modalX + 25f, contentY + 132f, itemW, 58f,
+            DrawShopRow(modalX + 20f, contentY + (itemH + itemSpacing) * 2f, itemW, itemH,
                 string.Format("Shield Duration (Lv {0}/4)", curLevel),
                 upDesc,
                 btnText,
@@ -369,7 +367,7 @@ public class ShopManager : MonoBehaviour
                     {
                         SetFeedback("Not enough coins!");
                     }
-                }, curLevel >= 4);
+                }, curLevel >= 4, scale);
         }
         else
         {
@@ -386,7 +384,7 @@ public class ShopManager : MonoBehaviour
                 else if (isUnlocked) actionText = "EQUIP";
                 else actionText = string.Format("BUY {0}", skin.price);
 
-                DrawShopRow(modalX + 25f, contentY + (i * 66f), itemW, 58f,
+                DrawShopRow(modalX + 20f, contentY + (i * (itemH + itemSpacing)), itemW, itemH,
                     skin.displayName,
                     isEquipped ? "Currently Surfing" : (isUnlocked ? "Unlocked & Ready" : "Exclusive Board Style"),
                     actionText,
@@ -396,6 +394,7 @@ public class ShopManager : MonoBehaviour
                         if (isUnlocked)
                         {
                             EquipSkin(skin.id);
+                            AudioManager.Instance?.PlayClick();
                         }
                         else
                         {
@@ -411,7 +410,7 @@ public class ShopManager : MonoBehaviour
                                 SetFeedback("Not enough coins!");
                             }
                         }
-                    }, isEquipped);
+                    }, isEquipped, scale);
             }
         }
 
@@ -420,47 +419,65 @@ public class ShopManager : MonoBehaviour
         {
             GUIStyle fbStyle = new GUIStyle(GUI.skin.label)
             {
-                fontSize = 15,
+                fontSize = Mathf.RoundToInt(14 * scale),
                 fontStyle = FontStyle.Bold,
                 alignment = TextAnchor.MiddleCenter
             };
             fbStyle.normal.textColor = feedbackMsg.Contains("Not enough") ? Color.red : Color.green;
-            GUI.Label(new Rect(modalX, modalH + modalY - 80f, modalW, 26f), feedbackMsg, fbStyle);
+            GUI.Label(new Rect(modalX, modalY + modalH - (88f * scale), modalW, 26f), feedbackMsg, fbStyle);
         }
 
-        // 5. Close Button
-        GUIStyle closeStyle = new GUIStyle(GUI.skin.button)
-        {
-            fontSize = 16,
-            fontStyle = FontStyle.Bold
-        };
-        closeStyle.normal.textColor = Color.white;
-        if (GUI.Button(new Rect(modalX + 35f, modalH + modalY - 48f, modalW - 70f, 38f), "CLOSE SHOP", closeStyle))
+        // 5. Close Button (Chunky Red Candy Button)
+        Rect closeRect = new Rect(modalX + 20f, modalY + modalH - (54f * scale), modalW - 40f, 44f * scale);
+        if (SubwayUI.DrawChunkyButton(closeRect, "✕ CLOSE SHOP", SubwayUI.RedFace, SubwayUI.RedBevel, Color.white, Mathf.RoundToInt(15 * scale)))
         {
             CloseShop();
+            AudioManager.Instance?.PlayClick();
         }
     }
 
-    private void DrawShopRow(float x, float y, float w, float h, string title, string sub, string action, System.Action onAction, bool disabled = false)
+    private void DrawShopRow(float x, float y, float w, float h, string title, string sub, string action, System.Action onAction, bool disabled = false, float scale = 1.0f)
     {
-        GUI.Box(new Rect(x, y, w, h), "");
+        SubwayUI.DrawCard(new Rect(x, y, w, h), SubwayUI.InnerCard, SubwayUI.GrayBorder, 1.5f);
 
-        GUIStyle tStyle = new GUIStyle(GUI.skin.label) { fontSize = 14, fontStyle = FontStyle.Bold };
-        tStyle.normal.textColor = Color.white;
-        GUI.Label(new Rect(x + 10f, y + 6f, w - 120f, 22f), title, tStyle);
-
-        GUIStyle sStyle = new GUIStyle(GUI.skin.label) { fontSize = 11 };
-        sStyle.normal.textColor = Color.gray;
-        GUI.Label(new Rect(x + 10f, y + 28f, w - 120f, 22f), sub, sStyle);
-
-        GUIStyle btnStyle = new GUIStyle(GUI.skin.button)
+        GUIStyle tStyle = new GUIStyle(GUI.skin.label)
         {
-            fontSize = 12,
+            fontSize = Mathf.RoundToInt(14 * scale),
             fontStyle = FontStyle.Bold
         };
-        btnStyle.normal.textColor = disabled ? Color.gray : Color.yellow;
+        tStyle.normal.textColor = Color.white;
+        GUI.Label(new Rect(x + 12f, y + (8f * scale), w - (125f * scale), 22f), title, tStyle);
 
-        if (GUI.Button(new Rect(x + w - 105f, y + 10f, 96f, 38f), action, btnStyle))
+        GUIStyle sStyle = new GUIStyle(GUI.skin.label)
+        {
+            fontSize = Mathf.RoundToInt(11 * scale)
+        };
+        sStyle.normal.textColor = Color.gray;
+        GUI.Label(new Rect(x + 12f, y + (30f * scale), w - (125f * scale), 22f), sub, sStyle);
+
+        // Action Button
+        float btnW = 105f * scale;
+        float btnH = 40f * scale;
+        Rect btnRect = new Rect(x + w - btnW - 10f, y + ((h - btnH) / 2f), btnW, btnH);
+
+        Color face = SubwayUI.YellowFace;
+        Color bevel = SubwayUI.YellowBevel;
+        Color txtCol = Color.black;
+
+        if (action == "EQUIPPED")
+        {
+            face = SubwayUI.DarkCard;
+            bevel = SubwayUI.InnerCard;
+            txtCol = Color.cyan;
+        }
+        else if (action == "EQUIP")
+        {
+            face = SubwayUI.GreenFace;
+            bevel = SubwayUI.GreenBevel;
+            txtCol = Color.white;
+        }
+
+        if (SubwayUI.DrawChunkyButton(btnRect, action, face, bevel, txtCol, Mathf.RoundToInt(13 * scale)))
         {
             if (!disabled && onAction != null)
             {

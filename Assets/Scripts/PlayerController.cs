@@ -777,51 +777,20 @@ public class PlayerController : MonoBehaviour
     {
         if (GameManager.Instance != null && (!GameManager.Instance.IsPlaying || GameManager.Instance.isGameOver || GameManager.Instance.isPaused)) return;
 
-        int baseFontSize = Mathf.Clamp(Mathf.RoundToInt(Screen.height * 0.026f), 15, 22);
-
-        // 1. Hoverboard HUD Status (Top Left, neatly below Score)
-        GUIStyle hudStyle = new GUIStyle(GUI.skin.box);
-        hudStyle.fontSize = baseFontSize;
-        hudStyle.fontStyle = FontStyle.Bold;
-        hudStyle.alignment = TextAnchor.MiddleCenter;
-
-        float boxW = Mathf.Clamp(Screen.width * 0.32f, 240f, 340f);
-        float boxH = Mathf.Clamp(Screen.height * 0.052f, 36f, 44f);
-        float topY = 65f;
-
-        if (isHoverboardActive)
-        {
-            hudStyle.normal.textColor = Color.cyan;
-            string text = string.Format("🛹 ACTIVE: {0:F1}s  (x{1})", hoverboardTimer, hoverboardCount);
-            GUI.Box(new Rect(25, topY, boxW, boxH), text, hudStyle);
-
-            // Progress bar
-            float barWidth = Mathf.Clamp01(hoverboardTimer / 15f) * (boxW - 6f);
-            GUI.color = Color.cyan;
-            GUI.DrawTexture(new Rect(28, topY + boxH - 4f, barWidth, 3f), Texture2D.whiteTexture);
-            GUI.color = Color.white;
-        }
-        else
-        {
-            hudStyle.normal.textColor = Color.white;
-            string text = string.Format("🛹 Boards: {0}  [TAP / 'E']", hoverboardCount);
-            // Single clean button: tap directly or press 'E' or double-tap anywhere on screen!
-            if (GUI.Button(new Rect(25, topY, boxW, boxH), text, hudStyle))
-            {
-                DeployHoverboard();
-            }
-        }
-
-        // 2. Center Notification Banner
+        // Center Notification Banner (e.g., "+1 Hoverboard Added", "Shield Absorbed Crash!")
         if (bannerTimer > 0f)
         {
-            GUIStyle bStyle = new GUIStyle(GUI.skin.box);
-            bStyle.fontSize = Mathf.Clamp(Mathf.RoundToInt(Screen.height * 0.028f), 16, 24);
-            bStyle.fontStyle = FontStyle.Bold;
-            bStyle.alignment = TextAnchor.MiddleCenter;
-            bStyle.normal.textColor = isHoverboardActive ? Color.cyan : Color.yellow;
-            float bW = Mathf.Clamp(Screen.width * 0.65f, 300f, 500f);
-            GUI.Box(new Rect((Screen.width - bW) / 2f, 16f, bW, 42f), bannerMessage, bStyle);
+            float sw = Screen.width;
+            float sh = Screen.height;
+            float scale = Mathf.Clamp(sw / 400f, 0.80f, 1.35f);
+
+            float bW = Mathf.Clamp(sw * 0.75f, 260f, 440f);
+            float bH = 38f * scale;
+            Rect bRect = new Rect((sw - bW) / 2f, Mathf.Max(18f, sh * 0.035f) + (72f * scale), bW, bH);
+
+            SubwayUI.DrawCard(bRect, SubwayUI.DarkCard, SubwayUI.GoldBorder, 1.5f);
+            SubwayUI.DrawExtrudedText(bRect, bannerMessage, Mathf.RoundToInt(14 * scale),
+                isHoverboardActive ? Color.cyan : Color.yellow, new Color(0f, 0f, 0f, 0.8f), 2);
         }
     }
 }
