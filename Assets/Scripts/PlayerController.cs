@@ -592,20 +592,26 @@ public class PlayerController : MonoBehaviour
             {
                 // Authentic Subway Surfers 360° acrobatic forward roll / somersault!
                 float rollProgress = Mathf.Clamp01(1f - (slideTimer / slideDuration));
-                
-                // Full 360° forward pitch somersault (smooth continuous rotation over ground)
+                float rollAngleRad = rollProgress * (Mathf.PI * 2f); // 0 to 2*PI (0° to 360°)
                 float rollPitch = rollProgress * 360f;
+
+                // 1. Full 360° forward pitch somersault
                 characterModel.localRotation = Quaternion.Euler(rollPitch, 0f, 0f);
 
-                // Dynamic tuck drop: centers drops toward ground as the character curls into a ball
-                float curlTuck = Mathf.Sin(rollProgress * Mathf.PI);
-                float tuckDrop = curlTuck * 0.38f;
-                characterModel.localPosition = new Vector3(0f, -0.75f - tuckDrop, curlTuck * 0.08f);
+                // 2. Pivot compensation:
+                // Because the 3D model's origin is at its feet (-0.75m), rotating around feet would dip the head underground.
+                // By offsetting the local position by rollRadius * (1 - cos(theta)), the character rotates around their
+                // hips/torso above the rails, guaranteeing the player NEVER dips below the track!
+                float rollRadius = 0.40f;
+                float yOffset = -0.75f + rollRadius * (1f - Mathf.Cos(rollAngleRad));
+                float zOffset = rollRadius * Mathf.Sin(rollAngleRad);
+                characterModel.localPosition = new Vector3(0f, yOffset, zOffset);
 
-                // Athletic squash & ball tuck: character curls tightly into a roll ball
-                float squashX = baseScale * (1f + 0.10f * curlTuck);
-                float squashY = baseScale * (1f - 0.24f * curlTuck);
-                float squashZ = baseScale * (1f - 0.15f * curlTuck);
+                // 3. Athletic tuck & squash into a compact rolling ball
+                float curlTuck = Mathf.Sin(rollProgress * Mathf.PI);
+                float squashX = baseScale * (1f + 0.08f * curlTuck);
+                float squashY = baseScale * (1f - 0.20f * curlTuck);
+                float squashZ = baseScale * (1f - 0.12f * curlTuck);
                 characterModel.localScale = new Vector3(squashX, squashY, squashZ);
             }
             else
@@ -712,6 +718,7 @@ public class PlayerController : MonoBehaviour
         controller.center = normalCenter;
         if (characterModel != null)
         {
+            characterModel.localPosition = new Vector3(0f, -0.75f, 0f);
             characterModel.localRotation = Quaternion.identity;
             characterModel.localScale = Vector3.one * baseScale;
         }
