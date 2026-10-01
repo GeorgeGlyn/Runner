@@ -90,26 +90,26 @@ public class AudioManager : MonoBehaviour
             coinSource.playOnAwake = false;
         }
 
-        EnsureClipsLoaded();
+        EnsureClipsLoaded(true);
 
         // Read saved mute preference
         isMuted = PlayerPrefs.GetInt("AudioMuted", 0) == 1;
         UpdateAudioVolumes();
     }
 
-    public void EnsureClipsLoaded()
+    public void EnsureClipsLoaded(bool forceReload = false)
     {
-        if (bgmClip == null) bgmClip = LoadClip("bgm");
-        if (coinClip == null) coinClip = LoadClip("coin");
-        if (jumpClip == null) jumpClip = LoadClip("jump");
-        if (slideClip == null) slideClip = LoadClip("slide");
-        if (hoverboardClip == null) hoverboardClip = LoadClip("hoverboard");
-        if (shieldSaveClip == null) shieldSaveClip = LoadClip("shield_save");
-        if (crashClip == null) crashClip = LoadClip("crash");
-        if (powerupClip == null) powerupClip = LoadClip("powerup");
-        if (whistleClip == null) whistleClip = LoadClip("whistle");
-        if (highscoreClip == null) highscoreClip = LoadClip("highscore");
-        if (clickClip == null) clickClip = LoadClip("click");
+        if (forceReload || bgmClip == null) bgmClip = LoadClip("bgm");
+        if (forceReload || coinClip == null) coinClip = LoadClip("coin");
+        if (forceReload || jumpClip == null) jumpClip = LoadClip("jump");
+        if (forceReload || slideClip == null) slideClip = LoadClip("slide");
+        if (forceReload || hoverboardClip == null) hoverboardClip = LoadClip("hoverboard");
+        if (forceReload || shieldSaveClip == null) shieldSaveClip = LoadClip("shield_save");
+        if (forceReload || crashClip == null) crashClip = LoadClip("crash");
+        if (forceReload || powerupClip == null) powerupClip = LoadClip("powerup");
+        if (forceReload || whistleClip == null) whistleClip = LoadClip("whistle");
+        if (forceReload || highscoreClip == null) highscoreClip = LoadClip("highscore");
+        if (forceReload || clickClip == null) clickClip = LoadClip("click");
     }
 
     private AudioClip LoadClip(string clipName)
