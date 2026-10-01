@@ -33,6 +33,7 @@ public class GameManager : MonoBehaviour
     public void AddCoin()
     {
         coins++;
+        ShopManager.Instance?.AddCoins(1);
     }
 
     public void GameOver()
@@ -75,6 +76,18 @@ public class GameManager : MonoBehaviour
         coinStyle.normal.textColor = Color.yellow;
 GUI.Label(new Rect(Screen.width - 260, 20, 180, 40), "COINS: " + coins, coinStyle);
 
+        // Shop Button (Top Right HUD)
+        GUIStyle shopBtnStyle = new GUIStyle(GUI.skin.button)
+        {
+            fontSize = Mathf.Clamp(Mathf.RoundToInt(Screen.height * 0.020f), 13, 17),
+            fontStyle = FontStyle.Bold
+        };
+        shopBtnStyle.normal.textColor = Color.yellow;
+        if (GUI.Button(new Rect(Screen.width - 130, 20, 54, 34), "SHOP", shopBtnStyle))
+        {
+            ShopManager.Instance?.OpenShop();
+        }
+
         // Mute / Unmute Button
         string muteText = (AudioManager.Instance != null && AudioManager.Instance.isMuted) ? "MUTE" : "AUDIO";
         if (GUI.Button(new Rect(Screen.width - 70, 20, 52, 34), muteText))
@@ -82,8 +95,8 @@ GUI.Label(new Rect(Screen.width - 260, 20, 180, 40), "COINS: " + coins, coinStyl
             AudioManager.Instance?.ToggleMute();
         }
 
-        // Game Over Screen (Centered Responsive Modal)
-        if (isGameOver)
+        // Game Over Screen (Only shown when Shop is not covering the screen)
+        if (isGameOver && (ShopManager.Instance == null || !ShopManager.Instance.isShopOpen))
         {
             float modalW = Mathf.Clamp(Screen.width * 0.75f, 320f, 440f);
             float modalH = 320f;

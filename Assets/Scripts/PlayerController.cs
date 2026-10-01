@@ -78,6 +78,12 @@ public class PlayerController : MonoBehaviour
             characterRenderers = characterModel.GetComponentsInChildren<Renderer>();
         }
 
+        // Load persistent hoverboard inventory from ShopManager
+        if (ShopManager.Instance != null)
+        {
+            hoverboardCount = ShopManager.Instance.GetHoverboardStock();
+        }
+
         // By default in Subway Surfers, player runs on their feet!
         if (hoverboard != null)
         {
@@ -355,8 +361,17 @@ public class PlayerController : MonoBehaviour
     {
         if (!isHoverboardActive && hoverboardCount > 0)
         {
-            hoverboardCount--;
-            ActivateHoverboard(15f);
+            if (ShopManager.Instance != null)
+            {
+                ShopManager.Instance.ConsumeHoverboard();
+                hoverboardCount = ShopManager.Instance.GetHoverboardStock();
+            }
+            else
+            {
+                hoverboardCount--;
+            }
+            float duration = ShopManager.Instance != null ? ShopManager.Instance.GetHoverboardDuration() : 15f;
+            ActivateHoverboard(duration);
             AudioManager.Instance?.PlayHoverboardDeploy();
             ShowBanner(string.Format("🛹 HOVERBOARD ACTIVATED! ({0} Remaining)", hoverboardCount));
         }
@@ -583,7 +598,15 @@ public class PlayerController : MonoBehaviour
 
     public void CollectHoverboardItem()
     {
-        hoverboardCount++;
+        if (ShopManager.Instance != null)
+        {
+            ShopManager.Instance.AddHoverboard(1);
+            hoverboardCount = ShopManager.Instance.GetHoverboardStock();
+        }
+        else
+        {
+            hoverboardCount++;
+        }
         AudioManager.Instance?.PlayPowerup();
         ShowBanner(string.Format("🛹 +1 HOVERBOARD STORED! (Total: {0})", hoverboardCount));
     }
@@ -603,6 +626,18 @@ public class PlayerController : MonoBehaviour
         if (hoverboard != null)
         {
             hoverboard.gameObject.SetActive(true);
+            if (ShopManager.Instance != null)
+            {
+                var skin = ShopManager.Instance.GetEquippedSkin();
+                Renderer[] rends = hoverboard.GetComponentsInChildren<Renderer>();
+                for (int i = 0; i < rends.Length; i++)
+                {
+                    if (rends[i] != null && rends[i].material != null)
+                    {
+                        rends[i].material.color = skin.primaryColor;
+                    }
+                }
+            }
         }
         if (animator != null)
         {

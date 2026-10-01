@@ -277,6 +277,10 @@ public class RunnerSceneBuilder
         GameObject gmGO = new GameObject("GameManager");
         gmGO.AddComponent<GameManager>();
 
+        // Setup ShopManager (Persistent Currency & Upgrades)
+        GameObject shopGO = new GameObject("ShopManager");
+        shopGO.AddComponent<ShopManager>();
+
         // Setup AudioManager with Synthesized SFX & BGM Clips
         GameObject audioGO = new GameObject("AudioManager");
         AudioManager am = audioGO.AddComponent<AudioManager>();
