@@ -10,11 +10,16 @@ public class PlayerController : MonoBehaviour
 
     [Header("Movement Settings")]
     public float forwardSpeed = 12f;
-    public float normalSpeed = 12f;
-    public float hoverboardSpeed = 15.5f; // Fast, exciting hover rush!
     public float laneDistance = 2.5f;
     public float laneChangeSpeed = 22f; // Fast, snappy track change
     private int targetLane = 1; // 0: Left, 1: Middle, 2: Right
+
+    [Header("Subway Surfers Speed Progression")]
+    public float initialSpeed = 12f;
+    public float maxSpeed = 24.5f;
+    public float speedAcceleration = 0.12f; // Smooth acceleration over time
+    public float currentBaseSpeed = 12f;
+    public float hoverboardBonusSpeed = 4.0f; // Fast, exciting hover rush!
 
     [Header("Jump Settings")]
     public float jumpForce = 8.5f;
@@ -82,7 +87,8 @@ public class PlayerController : MonoBehaviour
         {
             animator.SetBool("IsHovering", false);
         }
-        forwardSpeed = normalSpeed;
+        currentBaseSpeed = initialSpeed;
+        forwardSpeed = initialSpeed;
     }
 
     void Update()
@@ -103,6 +109,13 @@ public class PlayerController : MonoBehaviour
             }
         }
 
+        // 0. Smooth Speed Progression over time and distance
+        if (GameManager.Instance != null && !GameManager.Instance.isGameOver)
+        {
+            currentBaseSpeed = Mathf.Min(maxSpeed, currentBaseSpeed + speedAcceleration * Time.deltaTime);
+        }
+        forwardSpeed = isHoverboardActive ? (currentBaseSpeed + hoverboardBonusSpeed) : currentBaseSpeed;
+
         // 2. Proactive Capsule Overlap Check against obstacles
         CheckObstacleOverlaps();
 
@@ -118,11 +131,18 @@ public class PlayerController : MonoBehaviour
         // 5. Unified Input: Mobile Touch Gestures (Swipe / Double-Tap) + Keyboard Fallback
         ProcessMovementAndGestureInput();
 
-        // 6. Snappy Lateral Movement
+        // 6. Snappy Lateral Movement (Scales dynamically with forward speed)
+        float dynamicLaneSpeed = Mathf.Max(laneChangeSpeed, forwardSpeed * 1.6f);
         float targetX = (targetLane - 1) * laneDistance;
         float currentX = transform.position.x;
-        float newX = Mathf.MoveTowards(currentX, targetX, laneChangeSpeed * Time.deltaTime);
+        float newX = Mathf.MoveTowards(currentX, targetX, dynamicLaneSpeed * Time.deltaTime);
         float lateralVelocity = (newX - currentX) / Time.deltaTime;
+
+        // Scale running animation tempo with player running velocity
+        if (animator != null && !isHoverboardActive)
+        {
+            animator.speed = Mathf.Clamp(forwardSpeed / initialSpeed, 1.0f, 1.75f);
+        }
 
         // 7. Slide Timer & State Update
         if (isSliding)
@@ -468,7 +488,7 @@ public class PlayerController : MonoBehaviour
         }
 
         // PLAYER NEVER MOVES BACKWARD! Forward momentum continues seamlessly!
-        forwardSpeed = normalSpeed;
+        forwardSpeed = currentBaseSpeed;
     }
 
     private void UpdateHoverboardState()
@@ -571,7 +591,7 @@ public class PlayerController : MonoBehaviour
     {
         isHoverboardActive = true;
         hoverboardTimer = duration;
-        forwardSpeed = hoverboardSpeed;
+        forwardSpeed = currentBaseSpeed + hoverboardBonusSpeed;
 
         if (hoverboard == null) hoverboard = transform.Find("Hoverboard");
         if (hoverboard != null)
@@ -588,7 +608,7 @@ public class PlayerController : MonoBehaviour
     {
         isHoverboardActive = false;
         hoverboardTimer = 0f;
-        forwardSpeed = normalSpeed;
+        forwardSpeed = currentBaseSpeed;
 
         if (hoverboard != null)
         {

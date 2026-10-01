@@ -2,13 +2,27 @@ using UnityEngine;
 
 public class Coin : MonoBehaviour
 {
-    public float rotationSpeed = 120f;
+    public float rotationSpeed = 140f;
     public AudioClip coinSound;
     private bool isCollected = false;
 
+    private Vector3 initialPos;
+    private float bobSeed;
+
+    void Start()
+    {
+        initialPos = transform.position;
+        bobSeed = Random.Range(0f, Mathf.PI * 2f);
+    }
+
     void Update()
     {
+        // Continuous 3D spin
         transform.Rotate(0, rotationSpeed * Time.deltaTime, 0, Space.World);
+
+        // Subtle vertical floating bob
+        float bob = Mathf.Sin((Time.time * 4.5f) + bobSeed) * 0.06f;
+        transform.position = new Vector3(initialPos.x, initialPos.y + bob, initialPos.z);
     }
 
     void OnTriggerEnter(Collider other)
