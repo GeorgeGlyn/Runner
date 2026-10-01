@@ -2,7 +2,33 @@ using UnityEngine;
 
 public class ShopManager : MonoBehaviour
 {
-    public static ShopManager Instance;
+    private static ShopManager _instance;
+    public static ShopManager Instance
+    {
+        get
+        {
+            if (_instance == null)
+            {
+                _instance = Object.FindFirstObjectByType<ShopManager>();
+                if (_instance == null)
+                {
+                    GameObject go = new GameObject("ShopManager");
+                    _instance = go.AddComponent<ShopManager>();
+                    DontDestroyOnLoad(go);
+                }
+            }
+            return _instance;
+        }
+    }
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    private static void AutoInitialize()
+    {
+        if (_instance == null)
+        {
+            var dummy = Instance;
+        }
+    }
 
     public bool isShopOpen = false;
 
@@ -49,11 +75,12 @@ public class ShopManager : MonoBehaviour
 
     void Awake()
     {
-        if (Instance == null)
+        if (_instance == null)
         {
-            Instance = this;
+            _instance = this;
+            DontDestroyOnLoad(gameObject);
         }
-        else if (Instance != this)
+        else if (_instance != this)
         {
             Destroy(gameObject);
             return;

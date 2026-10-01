@@ -2,7 +2,33 @@ using UnityEngine;
 
 public class AudioManager : MonoBehaviour
 {
-    public static AudioManager Instance;
+    private static AudioManager _instance;
+    public static AudioManager Instance
+    {
+        get
+        {
+            if (_instance == null)
+            {
+                _instance = Object.FindFirstObjectByType<AudioManager>();
+                if (_instance == null)
+                {
+                    GameObject go = new GameObject("AudioManager");
+                    _instance = go.AddComponent<AudioManager>();
+                    DontDestroyOnLoad(go);
+                }
+            }
+            return _instance;
+        }
+    }
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    private static void AutoInitialize()
+    {
+        if (_instance == null)
+        {
+            var dummy = Instance;
+        }
+    }
 
     [Header("Audio Sources")]
     public AudioSource bgmSource;
@@ -20,8 +46,8 @@ public class AudioManager : MonoBehaviour
     public AudioClip powerupClip;
 
     [Header("Volume Controls")]
-    [Range(0f, 1f)] public float bgmVolume = 0.60f;
-    [Range(0f, 1f)] public float sfxVolume = 0.85f;
+    [Range(0f, 1f)] public float bgmVolume = 0.55f;
+    [Range(0f, 1f)] public float sfxVolume = 0.80f;
     public bool isMuted = false;
 
     // Dynamic pitch escalation for rapid coin streaks (Subway Surfers signature!)
@@ -30,11 +56,12 @@ public class AudioManager : MonoBehaviour
 
     void Awake()
     {
-        if (Instance == null)
+        if (_instance == null)
         {
-            Instance = this;
+            _instance = this;
+            DontDestroyOnLoad(gameObject);
         }
-        else if (Instance != this)
+        else if (_instance != this)
         {
             Destroy(gameObject);
             return;
@@ -60,9 +87,35 @@ public class AudioManager : MonoBehaviour
             coinSource.playOnAwake = false;
         }
 
+        EnsureClipsLoaded();
+
         // Read saved mute preference
         isMuted = PlayerPrefs.GetInt("AudioMuted", 0) == 1;
         UpdateAudioVolumes();
+    }
+
+    public void EnsureClipsLoaded()
+    {
+        if (bgmClip == null) bgmClip = LoadClip("bgm");
+        if (coinClip == null) coinClip = LoadClip("coin");
+        if (jumpClip == null) jumpClip = LoadClip("jump");
+        if (slideClip == null) slideClip = LoadClip("slide");
+        if (hoverboardClip == null) hoverboardClip = LoadClip("hoverboard");
+        if (shieldSaveClip == null) shieldSaveClip = LoadClip("shield_save");
+        if (crashClip == null) crashClip = LoadClip("crash");
+        if (powerupClip == null) powerupClip = LoadClip("powerup");
+    }
+
+    private AudioClip LoadClip(string clipName)
+    {
+        AudioClip clip = Resources.Load<AudioClip>("Audio/" + clipName);
+#if UNITY_EDITOR
+        if (clip == null)
+        {
+            clip = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/" + clipName + ".wav");
+        }
+#endif
+        return clip;
     }
 
     void Start()
@@ -88,6 +141,7 @@ public class AudioManager : MonoBehaviour
     // ── BGM Control ──────────────────────────────────────────────────────────
     public void PlayBGM()
     {
+        if (bgmClip == null) EnsureClipsLoaded();
         if (bgmSource != null && bgmClip != null)
         {
             if (bgmSource.clip != bgmClip)
@@ -126,7 +180,9 @@ public class AudioManager : MonoBehaviour
     /// </summary>
     public void PlayCoinSound()
     {
-        if (isMuted || coinSource == null || coinClip == null) return;
+        if (isMuted) return;
+        if (coinClip == null) EnsureClipsLoaded();
+        if (coinSource == null || coinClip == null) return;
 
         // If collected within 0.70 seconds of previous coin, climb musical semitones!
         if (Time.time - lastCoinTime < 0.70f)
@@ -147,33 +203,39 @@ public class AudioManager : MonoBehaviour
 
     public void PlayJump()
     {
-        PlaySFX(jumpClip, 0.85f);
+        if (jumpClip == null) EnsureClipsLoaded();
+        PlaySFX(jumpClip, 0.75f);
     }
 
     public void PlaySlide()
     {
-        PlaySFX(slideClip, 0.75f);
+        if (slideClip == null) EnsureClipsLoaded();
+        PlaySFX(slideClip, 0.70f);
     }
 
     public void PlayHoverboardDeploy()
     {
-        PlaySFX(hoverboardClip, 0.90f);
+        if (hoverboardClip == null) EnsureClipsLoaded();
+        PlaySFX(hoverboardClip, 0.85f);
     }
 
     public void PlayShieldSave()
     {
-        PlaySFX(shieldSaveClip, 1.0f);
+        if (shieldSaveClip == null) EnsureClipsLoaded();
+        PlaySFX(shieldSaveClip, 0.95f);
     }
 
     public void PlayCrash()
     {
+        if (crashClip == null) EnsureClipsLoaded();
         PlaySFX(crashClip, 1.0f);
         PauseBGM();
     }
 
     public void PlayPowerup()
     {
-        PlaySFX(powerupClip, 0.95f);
+        if (powerupClip == null) EnsureClipsLoaded();
+        PlaySFX(powerupClip, 0.90f);
     }
 
     private void PlaySFX(AudioClip clip, float volumeScale = 1.0f)
