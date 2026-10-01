@@ -29,6 +29,13 @@ public class Coin : MonoBehaviour
     {
         if (isCollected) return;
 
+        // If a train intersects this coin, immediately destroy it so no coins ever exist below/inside a train!
+        if (other.GetComponent<MovingTrain>() != null || other.name.Contains("Train"))
+        {
+            Destroy(gameObject);
+            return;
+        }
+
         bool isPlayer = other.CompareTag("Player") ||
                         other.GetComponent<PlayerController>() != null ||
                         other.GetComponentInParent<PlayerController>() != null;

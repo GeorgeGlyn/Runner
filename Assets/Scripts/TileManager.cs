@@ -241,86 +241,113 @@ public class TileManager : MonoBehaviour
     /// </summary>
     private void PopulateDynamicItems(Transform parent, float tileZ, bool spawnObstacles)
     {
+        float[] lanes = new float[] { -2.5f, 0f, 2.5f };
+
         // 1. Overhead Railway Signal Gantry (Every 2-3 tiles)
         if (overheadGantryPrefab != null && Random.value < 0.40f)
         {
             Instantiate(overheadGantryPrefab, new Vector3(0f, 0f, tileZ + 15f), Quaternion.identity, parent);
         }
 
-        // 2. Obstacles, Trains, Coins, and Powerups
-        if (spawnObstacles && obstaclePrefabs != null && obstaclePrefabs.Length > 0)
+        // On starting introductory tiles (without obstacles): spawn a straight line of coins on center track!
+        if (!spawnObstacles)
         {
-            float[] lanes = new float[] { -2.5f, 0f, 2.5f };
-            int rLane = Random.Range(0, 3);
-            float laneX = lanes[rLane];
-
-            // Pick obstacle or train
-            bool isTrain = (Random.value > 0.45f && movingTrainPrefab != null);
-            GameObject obsPrefab = isTrain ? movingTrainPrefab : obstaclePrefabs[Random.Range(0, obstaclePrefabs.Length)];
-            Vector3 obsPos = new Vector3(laneX, 0f, tileZ + 15f);
-            GameObject obs = Instantiate(obsPrefab, obsPos, Quaternion.identity, parent);
-
-            bool isMovingTrain = false;
-            if (obs.name.Contains("Train"))
-            {
-                if (Random.value > 0.45f)
-                {
-                    if (obs.GetComponent<MovingTrain>() == null) obs.AddComponent<MovingTrain>();
-                    isMovingTrain = true;
-                }
-            }
-
-            // Dynamic Coin Formations (Arcs over obstacles, train roofs, and tracks!)
             if (coinPrefab != null)
             {
-                // A. If low hurdle or barrier: Spawn parabolic Coin Arc OVER the hurdle!
-                bool isLowObstacle = !isTrain && !obs.name.Contains("High") && !obs.name.Contains("Overhead");
+                SpawnGroundCoins(parent, 0f, tileZ + 8f, 6, 2.6f, 0.75f);
+            }
+            return;
+        }
+
+        if (obstaclePrefabs == null || obstaclePrefabs.Length == 0) return;
+
+        // 2. Obstacles, Trains, Coins, and Powerups
+        int rLane = Random.Range(0, 3);
+        float laneX = lanes[rLane];
+
+        // Randomly select obstacle or train
+        GameObject obsPrefab = obstaclePrefabs[Random.Range(0, obstaclePrefabs.Length)];
+        Vector3 obsPos = new Vector3(laneX, 0f, tileZ + 15f);
+        GameObject obs = Instantiate(obsPrefab, obsPos, Quaternion.identity, parent);
+
+        bool isTrain = obs.name.Contains("Train") || obsPrefab.name.Contains("Train");
+        bool isMovingTrain = false;
+        bool isWaitingTrain = false;
+
+        if (isTrain)
+        {
+            // Requirement 2: Support trains that are waiting (stationary) as well as moving!
+            // 50% chance of waiting (parked/stationary) train, 50% oncoming moving train
+            if (Random.value < 0.50f)
+            {
+                isWaitingTrain = true;
+                obs.name = "WaitingTrain";
+                // Ensure no MovingTrain script is attached so it sits waiting on the tracks
+                MovingTrain mt = obs.GetComponent<MovingTrain>();
+                if (mt != null) Destroy(mt);
+            }
+            else
+            {
+                isMovingTrain = true;
+                obs.name = "MovingTrain";
+                MovingTrain mt = obs.GetComponent<MovingTrain>();
+                if (mt == null) mt = obs.AddComponent<MovingTrain>();
+                mt.speed = Random.Range(10.5f, 13.5f);
+            }
+        }
+
+        // 3. Dynamic Coin Formations
+        // Requirement 1:
+        // - NO OVERLAP of coins across tracks (every coin is strictly centered on its track lane, no diagonals)
+        // - When there is a train, there shouldn't be ANY coin below that!
+        if (coinPrefab != null)
+        {
+            // A. Obstacle Lane (laneX):
+            if (isTrain)
+            {
+                // CRITICAL RULE: If there is a train (waiting or moving), NEVER spawn any coins on this lane!
+                // Zero coins below, inside, or touching the train.
+            }
+            else
+            {
+                // If it is a low obstacle (LowHurdle), spawn a parabolic coin arc OVER the hurdle!
+                bool isLowObstacle = !obs.name.Contains("High") && !obs.name.Contains("Overhead");
                 if (isLowObstacle && Random.value < 0.65f)
                 {
-                    // Parabolic coin arc over the barrier inviting the player to jump
+                    // Smooth jump arc over hurdle: 7 coins rising to 1.70m, strictly centered on laneX
                     SpawnCoinArc(parent, laneX, tileZ + 9f, 12f, 7, 1.70f, 0.75f);
                 }
-                else if (isTrain && !isMovingTrain)
-                {
-                    // Stationary train: Coins on the train roof!
-                    SpawnTrainRoofCoins(parent, laneX, tileZ + 15f, 7, 2.50f);
-                }
-
-                // B. Spawn coins on adjacent open lane
-                int cLane = (rLane + 1) % 3;
-                float cLaneX = lanes[cLane];
-                int patternType = Random.Range(0, 3);
-
-                if (patternType == 0)
-                {
-                    // Clean ground run (6 coins)
-                    SpawnGroundCoins(parent, cLaneX, tileZ + 7f, 6, 2.6f, 0.75f);
-                }
-                else if (patternType == 1)
-                {
-                    // Mid-track jump arc on open track (encourages athletic jumping)
-                    SpawnCoinArc(parent, cLaneX, tileZ + 8f, 13f, 7, 1.65f, 0.75f);
-                }
-                else
-                {
-                    // Dynamic lane switch diagonal (guides player between adjacent tracks)
-                    int targetSwitchLane = (cLane + (Random.value > 0.5f ? 1 : 2)) % 3;
-                    SpawnLaneSwitchCoins(parent, cLaneX, lanes[targetSwitchLane], tileZ + 6f, 6, 15f, 0.75f);
-                }
             }
 
-            // Spawn Hoverboard Powerup (~28% chance on remaining open lane)
-            if (hoverboardPickupPrefab != null && Random.value < 0.28f)
+            // B. Open Adjacent Track Lane (cLaneX):
+            int cLane = (rLane + 1) % 3;
+            float cLaneX = lanes[cLane];
+
+            // 50% clean straight ground line, 50% athletic jump arc on open track
+            if (Random.value < 0.50f)
             {
-                int pLane = (rLane + 2) % 3;
-                float pLaneX = lanes[pLane];
-                Instantiate(hoverboardPickupPrefab, new Vector3(pLaneX, 0.85f, tileZ + 20f), Quaternion.identity, parent);
+                // Clean ground run: 6 coins strictly centered on cLaneX
+                SpawnGroundCoins(parent, cLaneX, tileZ + 7f, 6, 2.6f, 0.75f);
             }
+            else
+            {
+                // Athletic jump arc: 7 coins strictly centered on cLaneX
+                SpawnCoinArc(parent, cLaneX, tileZ + 8f, 13f, 7, 1.65f, 0.75f);
+            }
+        }
+
+        // 4. Hoverboard Powerup (~28% chance on the remaining 3rd open lane)
+        if (hoverboardPickupPrefab != null && Random.value < 0.28f)
+        {
+            int pLane = (rLane + 2) % 3;
+            float pLaneX = lanes[pLane];
+            Instantiate(hoverboardPickupPrefab, new Vector3(pLaneX, 0.85f, tileZ + 20f), Quaternion.identity, parent);
         }
     }
 
     /// <summary>
-    /// Spawns a smooth parabolic coin arc matching the player's jump trajectory.
+    /// Spawns a smooth parabolic coin arc matching the player's jump trajectory,
+    /// strictly aligned to a single track lane.
     /// </summary>
     private void SpawnCoinArc(Transform parent, float laneX, float startZ, float arcLength, int coinCount, float arcHeight, float groundY)
     {
@@ -336,7 +363,7 @@ public class TileManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Spawns a straight ground run of coins.
+    /// Spawns a straight ground run of coins strictly centered on a single track lane.
     /// </summary>
     private void SpawnGroundCoins(Transform parent, float laneX, float startZ, int count, float spacing, float y)
     {
@@ -345,38 +372,6 @@ public class TileManager : MonoBehaviour
         {
             float z = startZ + (i * spacing);
             Instantiate(coinPrefab, new Vector3(laneX, y, z), Quaternion.identity, parent);
-        }
-    }
-
-    /// <summary>
-    /// Spawns an S-curve diagonal coin formation transitioning across lanes.
-    /// </summary>
-    private void SpawnLaneSwitchCoins(Transform parent, float fromLaneX, float toLaneX, float startZ, int count, float length, float y)
-    {
-        if (coinPrefab == null) return;
-        float step = length / (count - 1);
-        for (int i = 0; i < count; i++)
-        {
-            float t = (float)i / (count - 1);
-            float smoothT = t * t * (3f - 2f * t); // Smooth S-curve easing
-            float x = Mathf.Lerp(fromLaneX, toLaneX, smoothT);
-            float z = startZ + (i * step);
-            Instantiate(coinPrefab, new Vector3(x, y, z), Quaternion.identity, parent);
-        }
-    }
-
-    /// <summary>
-    /// Spawns a line of coins running along the roof of a train.
-    /// </summary>
-    private void SpawnTrainRoofCoins(Transform parent, float laneX, float trainZ, int count, float roofY)
-    {
-        if (coinPrefab == null) return;
-        float startZ = trainZ - 7f;
-        float spacing = 2.2f;
-        for (int i = 0; i < count; i++)
-        {
-            float z = startZ + (i * spacing);
-            Instantiate(coinPrefab, new Vector3(laneX, roofY, z), Quaternion.identity, parent);
         }
     }
 }
