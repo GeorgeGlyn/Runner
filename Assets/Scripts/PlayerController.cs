@@ -11,8 +11,10 @@ public class PlayerController : MonoBehaviour
     [Header("Movement Settings")]
     public float forwardSpeed = 12f;
     public float laneDistance = 2.5f;
-    public float laneChangeSpeed = 22f; // Fast, snappy track change
+    public float laneChangeSpeed = 13.5f; // Authentic Subway Surfers lateral speed
+    public float laneChangeSmoothTime = 0.075f; // Responsive ~0.18-0.20s transition
     private int targetLane = 1; // 0: Left, 1: Middle, 2: Right
+    private float lateralVelocityRef = 0f;
 
     [Header("Subway Surfers Speed Progression")]
     public float initialSpeed = 12f;
@@ -137,11 +139,16 @@ public class PlayerController : MonoBehaviour
         // 5. Unified Input: Mobile Touch Gestures (Swipe / Double-Tap) + Keyboard Fallback
         ProcessMovementAndGestureInput();
 
-        // 6. Snappy Lateral Movement (Scales dynamically with forward speed)
-        float dynamicLaneSpeed = Mathf.Max(laneChangeSpeed, forwardSpeed * 1.6f);
+        // 6. Authentic Subway Surfers Lateral Movement (~0.18-0.20s smooth transition)
+        float maxLateralSpeed = Mathf.Max(laneChangeSpeed, forwardSpeed * 1.15f);
         float targetX = (targetLane - 1) * laneDistance;
         float currentX = transform.position.x;
-        float newX = Mathf.MoveTowards(currentX, targetX, dynamicLaneSpeed * Time.deltaTime);
+        float newX = Mathf.SmoothDamp(currentX, targetX, ref lateralVelocityRef, laneChangeSmoothTime, maxLateralSpeed);
+        if (Mathf.Abs(newX - targetX) < 0.005f)
+        {
+            newX = targetX;
+            lateralVelocityRef = 0f;
+        }
         float lateralVelocity = (newX - currentX) / Time.deltaTime;
 
         // Scale running animation tempo with player running velocity
@@ -179,8 +186,8 @@ public class PlayerController : MonoBehaviour
         Vector3 move = new Vector3(lateralVelocity, verticalVelocity, forwardSpeed);
         controller.Move(move * Time.deltaTime);
 
-        // 11. Dynamic Banking Tilt
-        float tiltAngle = Mathf.Clamp(-lateralVelocity * 1.5f, -18f, 18f);
+        // 11. Dynamic Banking Tilt (Athletic lean into track turn)
+        float tiltAngle = Mathf.Clamp(-lateralVelocity * 1.1f, -14f, 14f);
         transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.Euler(0f, 0f, tiltAngle), 16f * Time.deltaTime);
     }
 
