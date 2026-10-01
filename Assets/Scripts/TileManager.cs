@@ -271,8 +271,6 @@ public class TileManager : MonoBehaviour
         GameObject obs = Instantiate(obsPrefab, obsPos, Quaternion.identity, parent);
 
         bool isTrain = obs.name.Contains("Train") || obsPrefab.name.Contains("Train");
-        bool isMovingTrain = false;
-        bool isWaitingTrain = false;
 
         if (isTrain)
         {
@@ -280,7 +278,6 @@ public class TileManager : MonoBehaviour
             // 50% chance of waiting (parked/stationary) train, 50% oncoming moving train
             if (Random.value < 0.50f)
             {
-                isWaitingTrain = true;
                 obs.name = "WaitingTrain";
                 // Ensure no MovingTrain script is attached so it sits waiting on the tracks
                 MovingTrain mt = obs.GetComponent<MovingTrain>();
@@ -288,7 +285,6 @@ public class TileManager : MonoBehaviour
             }
             else
             {
-                isMovingTrain = true;
                 obs.name = "MovingTrain";
                 MovingTrain mt = obs.GetComponent<MovingTrain>();
                 if (mt == null) mt = obs.AddComponent<MovingTrain>();
