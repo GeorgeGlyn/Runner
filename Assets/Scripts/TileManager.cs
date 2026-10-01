@@ -354,7 +354,7 @@ public class TileManager : MonoBehaviour
             float t = (float)i / (coinCount - 1);
             float z = startZ + (i * step);
             float y = groundY + (Mathf.Sin(t * Mathf.PI) * arcHeight);
-            Instantiate(coinPrefab, new Vector3(laneX, y, z), Quaternion.identity, parent);
+            Instantiate(coinPrefab, new Vector3(laneX, y, z), Quaternion.Euler(90f, 0f, 0f), parent);
         }
     }
 
@@ -367,7 +367,7 @@ public class TileManager : MonoBehaviour
         for (int i = 0; i < count; i++)
         {
             float z = startZ + (i * spacing);
-            Instantiate(coinPrefab, new Vector3(laneX, y, z), Quaternion.identity, parent);
+            Instantiate(coinPrefab, new Vector3(laneX, y, z), Quaternion.Euler(90f, 0f, 0f), parent);
         }
     }
 }

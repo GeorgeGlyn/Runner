@@ -2,23 +2,30 @@ using UnityEngine;
 
 public class Coin : MonoBehaviour
 {
-    public float rotationSpeed = 140f;
+    [Header("Spin & Floating Animation")]
+    public float rotationSpeed = 150f;
     public AudioClip coinSound;
     private bool isCollected = false;
 
     private Vector3 initialPos;
     private float bobSeed;
+    private float currentYaw;
 
     void Start()
     {
         initialPos = transform.position;
         bobSeed = Random.Range(0f, Mathf.PI * 2f);
+        currentYaw = Random.Range(0f, 360f); // Stagger initial rotation angles
+
+        // Immediately orient vertically upright (standing on rim, face forward)
+        transform.rotation = Quaternion.Euler(90f, currentYaw, 0f);
     }
 
     void Update()
     {
-        // Continuous 3D spin
-        transform.Rotate(0, rotationSpeed * Time.deltaTime, 0, Space.World);
+        // Stand vertically upright like a coin on its edge (90° pitch) and spin 360° around vertical Y axis!
+        currentYaw = (currentYaw + rotationSpeed * Time.deltaTime) % 360f;
+        transform.rotation = Quaternion.Euler(90f, currentYaw, 0f);
 
         // Subtle vertical floating bob
         float bob = Mathf.Sin((Time.time * 4.5f) + bobSeed) * 0.06f;
