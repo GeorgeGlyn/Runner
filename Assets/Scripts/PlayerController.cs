@@ -30,7 +30,7 @@ public class PlayerController : MonoBehaviour
     private float lastGroundedTime = 0f;
 
     [Header("Slide / Roll Settings")]
-    public float slideDuration = 0.85f;
+    public float slideDuration = 0.58f; // Authentic Subway Surfers forward roll timing
     public bool isSliding = false;
     private float slideTimer = 0f;
 
@@ -151,10 +151,10 @@ public class PlayerController : MonoBehaviour
         }
         float lateralVelocity = (newX - currentX) / Time.deltaTime;
 
-        // Scale running animation tempo with player running velocity
+        // Scale running animation tempo with player running velocity (crunched tuck during forward roll)
         if (animator != null && !isHoverboardActive)
         {
-            animator.speed = Mathf.Clamp(forwardSpeed / initialSpeed, 1.0f, 1.75f);
+            animator.speed = isSliding ? 0.35f : Mathf.Clamp(forwardSpeed / initialSpeed, 1.0f, 1.75f);
         }
 
         // 7. Slide Timer & State Update
@@ -569,10 +569,12 @@ public class PlayerController : MonoBehaviour
 
             if (isSliding)
             {
-                // Sliders on hoverboard lean back low over the board
-                Quaternion targetRot = Quaternion.Euler(-26f, 0f, 0f);
-                characterModel.localRotation = Quaternion.Lerp(characterModel.localRotation, targetRot, 18f * Time.deltaTime);
-                characterModel.localPosition = Vector3.Lerp(characterModel.localPosition, new Vector3(0f, -0.68f + bob, -0.10f), 18f * Time.deltaTime);
+                // Hoverboard low tuck: aerodynamic crouch low over deck to clear barriers
+                float crouchProgress = Mathf.Sin(Mathf.Clamp01(1f - (slideTimer / slideDuration)) * Mathf.PI);
+                Quaternion crouchRot = Quaternion.Euler(18f * crouchProgress, 30f, 0f);
+                characterModel.localRotation = Quaternion.Lerp(characterModel.localRotation, crouchRot, 20f * Time.deltaTime);
+                characterModel.localPosition = new Vector3(0f, -0.63f + bob - (0.28f * crouchProgress), -0.05f * crouchProgress);
+                characterModel.localScale = new Vector3(baseScale, baseScale * (1f - 0.18f * crouchProgress), baseScale);
             }
             else
             {
@@ -580,6 +582,7 @@ public class PlayerController : MonoBehaviour
                 Quaternion surferStance = Quaternion.Euler(0f, 30f, 0f);
                 characterModel.localRotation = Quaternion.Lerp(characterModel.localRotation, surferStance, 14f * Time.deltaTime);
                 characterModel.localPosition = Vector3.Lerp(characterModel.localPosition, new Vector3(0f, -0.63f + bob, 0f), 14f * Time.deltaTime);
+                characterModel.localScale = Vector3.one * baseScale;
             }
         }
         else
@@ -587,20 +590,32 @@ public class PlayerController : MonoBehaviour
             // Normal running on foot: sneakers touch the ground / rails directly!
             if (isSliding)
             {
-                // Authentic feet-first baseball / surfer slide
-                Quaternion targetRot = Quaternion.Euler(-32f, 0f, 0f);
-                characterModel.localRotation = Quaternion.Lerp(characterModel.localRotation, targetRot, 18f * Time.deltaTime);
-                characterModel.localPosition = Vector3.Lerp(characterModel.localPosition, new Vector3(0f, -0.80f, -0.12f), 18f * Time.deltaTime);
+                // Authentic Subway Surfers 360° acrobatic forward roll / somersault!
+                float rollProgress = Mathf.Clamp01(1f - (slideTimer / slideDuration));
+                
+                // Full 360° forward pitch somersault (smooth continuous rotation over ground)
+                float rollPitch = rollProgress * 360f;
+                characterModel.localRotation = Quaternion.Euler(rollPitch, 0f, 0f);
+
+                // Dynamic tuck drop: centers drops toward ground as the character curls into a ball
+                float curlTuck = Mathf.Sin(rollProgress * Mathf.PI);
+                float tuckDrop = curlTuck * 0.38f;
+                characterModel.localPosition = new Vector3(0f, -0.75f - tuckDrop, curlTuck * 0.08f);
+
+                // Athletic squash & ball tuck: character curls tightly into a roll ball
+                float squashX = baseScale * (1f + 0.10f * curlTuck);
+                float squashY = baseScale * (1f - 0.24f * curlTuck);
+                float squashZ = baseScale * (1f - 0.15f * curlTuck);
+                characterModel.localScale = new Vector3(squashX, squashY, squashZ);
             }
             else
             {
                 // Normal running upright posture directly on rails
-                characterModel.localRotation = Quaternion.Lerp(characterModel.localRotation, Quaternion.identity, 14f * Time.deltaTime);
-                characterModel.localPosition = Vector3.Lerp(characterModel.localPosition, new Vector3(0f, -0.75f, 0f), 14f * Time.deltaTime);
+                characterModel.localRotation = Quaternion.Lerp(characterModel.localRotation, Quaternion.identity, 16f * Time.deltaTime);
+                characterModel.localPosition = Vector3.Lerp(characterModel.localPosition, new Vector3(0f, -0.75f, 0f), 16f * Time.deltaTime);
+                characterModel.localScale = Vector3.one * baseScale;
             }
         }
-
-        characterModel.localScale = Vector3.one * baseScale;
     }
 
     public void CollectHoverboardItem()
@@ -695,6 +710,11 @@ public class PlayerController : MonoBehaviour
         isSliding = false;
         controller.height = normalHeight;
         controller.center = normalCenter;
+        if (characterModel != null)
+        {
+            characterModel.localRotation = Quaternion.identity;
+            characterModel.localScale = Vector3.one * baseScale;
+        }
     }
 
     public void ShowBanner(string msg)
